@@ -1,28 +1,29 @@
-# Use an official node.js image as the parent image
-From node:22-alpine
+# Use an official Node.js image as the base
+FROM node:22-alpine
 
-# setting the working directory in the container
+# Set the working directory
 WORKDIR /app
 
-# install openssl for prisma
+# Install openssl for Prisma
 RUN apk add --no-cache openssl
 
-# Copy the package.json and package-lock.json files to the container
+# Copy package files and install all dependencies (including devDeps for build)
 COPY package*.json .
-
-# install the dependencies
 RUN npm install
 
-# copy the rest of the application code 
-COPY . . 
+# Copy source code
+COPY . .
 
-# generate the Prisma client
+# Generate Prisma client
 RUN npx prisma generate
 
-#expose the port that the app runs on 
+# Compile TypeScript to dist/
+RUN npm run build
+
+# Expose the port
 EXPOSE 5003
 
-#define the command to run our application 
-CMD ["node", "./src/server.js"]
+# Run the compiled output
+CMD ["node", "dist/server.js"]
 
 

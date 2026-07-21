@@ -1,3 +1,4 @@
+//using the node sqlit natuve module to connect to database
 import { DatabaseSync } from 'node:sqlite'
 
 const db = new DatabaseSync(':memory:')

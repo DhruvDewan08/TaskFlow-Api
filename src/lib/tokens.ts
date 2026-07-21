@@ -41,7 +41,7 @@ export function verifyAccessToken(token: string): AccessTokenPayload {
   const secret = process.env.JWT_SECRET
   if (!secret) throw new Error('JWT_SECRET is not configured')
 
-  const decoded = jwt.verify(token, secret) as AccessTokenPayload
+  const decoded = jwt.verify(token, secret) as unknown as AccessTokenPayload
   if (decoded.type !== 'access') {
     throw new Error('Invalid token type')
   }
@@ -55,7 +55,7 @@ export function verifyRefreshToken(token: string): RefreshTokenPayload {
   const secret = process.env.REFRESH_SECRET
   if (!secret) throw new Error('REFRESH_SECRET is not configured')
 
-  const decoded = jwt.verify(token, secret) as RefreshTokenPayload
+  const decoded = jwt.verify(token, secret) as unknown as RefreshTokenPayload
   if (decoded.type !== 'refresh') {
     throw new Error('Invalid token type')
   }

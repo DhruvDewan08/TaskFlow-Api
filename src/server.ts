@@ -1,29 +1,19 @@
-import express, { Application } from 'express'
-import path, { dirname } from 'path'
-import { fileURLToPath } from 'url'
-import authRoutes from './routes/authRoutes.js'
-import todoRoutes from './routes/todoRoutes.js'
-import authMiddleware from './middleware/authMiddleware.js'
+import createApp from './app.js'
+import { connectRedis } from './lib/redis.js'
 
-const app: Application = express()
 const PORT: number = Number(process.env.PORT) || 5003
 
-const __filename: string = fileURLToPath(import.meta.url)
-const __dirname: string = dirname(__filename)
+async function start(): Promise<void> {
+  await connectRedis()
 
-// Middleware
-app.use(express.json())
-app.use(express.static(path.join(__dirname, '../public')))
+  const app = createApp()
 
-// Serve frontend
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public', 'index.html'))
-})
+  app.listen(PORT, () => {
+    console.log(`Server started on port: ${PORT}`)
+  })
+}
 
-// Routes
-app.use('/auth', authRoutes)
-app.use('/todos', authMiddleware, todoRoutes)
-
-app.listen(PORT, () => {
-  console.log(`Server started on port: ${PORT}`)
+start().catch((err) => {
+  console.error('Failed to start server:', err)
+  process.exit(1)
 })

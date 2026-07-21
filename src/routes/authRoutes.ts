@@ -1,82 +1,57 @@
-import express, { Request, Response } from 'express'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-import prisma from '../prisma.js'
+import express, { Request, Response, NextFunction } from 'express'
+import { validate } from '../middleware/validate.js'
+import { registerSchema, loginSchema, refreshSchema } from '../schemas/authSchemas.js'
+import {
+  registerUser,
+  loginUser,
+  refreshTokens,
+  logoutUser,
+} from '../services/authService.js'
 
 const router = express.Router()
 
-// POST /auth/register
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
-  const { username, password } = req.body as { username: string; password: string }
-
-  const hashedPassword: string = bcrypt.hashSync(password, 8)
-
-  try {
-    const user = await prisma.user.create({
-      data: {
-        username,
-        password: hashedPassword,
-      },
-    })
-
-    // Create a default todo for the new user
-    const defaultTodo = `Hello :) Add your first todo!`
-    await prisma.todo.create({
-      data: {
-        task: defaultTodo,
-        userId: user.id,
-      },
-    })
-
-    const token: string = jwt.sign(
-      { id: user.id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '24h' }
-    )
-
-    res.json({ token })
-  } catch (err) {
-    if (err instanceof Error) {
-      console.error(err.message)
-    }
-    res.sendStatus(503)
+function asyncHandler(
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>,
+) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    fn(req, res, next).catch(next)
   }
-})
+}
 
-// POST /auth/login
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
-  const { username, password } = req.body as { username: string; password: string }
+router.post(
+  '/register',
+  validate(registerSchema),
+  asyncHandler(async (req, res) => {
+    const tokens = await registerUser(req.body)
+    res.status(201).json(tokens)
+  }),
+)
 
-  try {
-    const user = await prisma.user.findUnique({
-      where: { username },
-    })
+router.post(
+  '/login',
+  validate(loginSchema),
+  asyncHandler(async (req, res) => {
+    const tokens = await loginUser(req.body)
+    res.json(tokens)
+  }),
+)
 
-    if (!user) {
-      res.status(404).json({ message: 'User not found' })
-      return
-    }
+router.post(
+  '/refresh',
+  validate(refreshSchema),
+  asyncHandler(async (req, res) => {
+    const tokens = await refreshTokens(req.body.refreshToken)
+    res.json(tokens)
+  }),
+)
 
-    const passwordIsValid: boolean = bcrypt.compareSync(password, user.password)
-
-    if (!passwordIsValid) {
-      res.status(401).json({ message: 'Invalid password' })
-      return
-    }
-
-    const token: string = jwt.sign(
-      { id: user.id },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '24h' }
-    )
-
-    res.json({ token })
-  } catch (err) {
-    if (err instanceof Error) {
-      console.error(err.message)
-    }
-    res.sendStatus(503)
-  }
-})
+router.post(
+  '/logout',
+  validate(refreshSchema),
+  asyncHandler(async (req, res) => {
+    await logoutUser(req.body.refreshToken)
+    res.json({ message: 'Logged out successfully' })
+  }),
+)
 
 export default router

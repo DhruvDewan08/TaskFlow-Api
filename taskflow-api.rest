@@ -1,0 +1,77 @@
+### Health check
+GET http://localhost:5003/health
+
+### OpenAPI spec
+GET http://localhost:5003/api-docs.json
+
+### Register
+POST http://localhost:5003/auth/register
+Content-Type: application/json
+
+{
+  "username": "demo_user",
+  "email": "demo@example.com",
+  "password": "password123"
+}
+
+### Login
+POST http://localhost:5003/auth/login
+Content-Type: application/json
+
+{
+  "email": "demo@example.com",
+  "password": "password123"
+}
+
+### Refresh tokens
+POST http://localhost:5003/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout
+POST http://localhost:5003/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### List tasks
+GET http://localhost:5003/tasks
+Authorization: Bearer {{accessToken}}
+
+### List completed tasks
+GET http://localhost:5003/tasks?completed=true
+Authorization: Bearer {{accessToken}}
+
+### Create task
+POST http://localhost:5003/tasks
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "title": "Finish TaskFlow API",
+  "description": "Polish and deploy",
+  "priority": "HIGH"
+}
+
+### Get task by ID
+GET http://localhost:5003/tasks/1
+Authorization: Bearer {{accessToken}}
+
+### Update task
+PUT http://localhost:5003/tasks/1
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "completed": true,
+  "priority": "LOW"
+}
+
+### Delete task
+DELETE http://localhost:5003/tasks/1
+Authorization: Bearer {{accessToken}}
